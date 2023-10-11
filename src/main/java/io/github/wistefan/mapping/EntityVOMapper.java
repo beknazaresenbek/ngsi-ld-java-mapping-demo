@@ -1,5 +1,6 @@
 package io.github.wistefan.mapping;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.annotations.AttributeSetter;
@@ -10,6 +11,7 @@ import org.fiware.ngsi.model.*;
 import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -71,6 +73,14 @@ public class EntityVOMapper extends Mapper {
         return getRelationshipMap(additionalPropertyVOMap, targetClass)
                 .flatMap(relationshipMap -> fromEntityVO(entityVO, targetClass, relationshipMap));
 
+    }
+
+    public String serialize(EntityVO entityVO) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(entityVO);
+    }
+
+    public EntityVO deserialize(String val) throws IOException {
+        return objectMapper.readValue(val.getBytes(), EntityVO.class);
     }
 
     /**
