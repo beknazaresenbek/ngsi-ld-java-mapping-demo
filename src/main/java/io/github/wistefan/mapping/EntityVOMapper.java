@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -79,8 +80,12 @@ public class EntityVOMapper extends Mapper {
         return objectMapper.writeValueAsString(entityVO);
     }
 
-    public EntityVO deserialize(String val) throws IOException {
-        return objectMapper.readValue(val.getBytes(), EntityVO.class);
+    public <T> T deserialize(byte[] bytes, Class<T> requiredType) throws IOException {
+        return objectMapper.readValue(bytes, requiredType);
+    }
+
+    public <T> T deserialize(InputStream inputStream, Class<T> requiredType) throws IOException {
+        return objectMapper.readValue(inputStream, requiredType);
     }
 
     /**

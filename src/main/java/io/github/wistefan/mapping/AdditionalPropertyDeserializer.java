@@ -1,21 +1,13 @@
 package io.github.wistefan.mapping;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
-import com.fasterxml.jackson.databind.jsontype.impl.AsArrayTypeDeserializer;
 import com.fasterxml.jackson.databind.jsontype.impl.AsPropertyTypeDeserializer;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.fiware.ngsi.model.AdditionalPropertyObjectVO;
-import org.fiware.ngsi.model.GeoPropertyListVO;
-import org.fiware.ngsi.model.GeoPropertyVO;
-import org.fiware.ngsi.model.PropertyListVO;
-import org.fiware.ngsi.model.PropertyVO;
-import org.fiware.ngsi.model.RelationshipListVO;
-import org.fiware.ngsi.model.RelationshipVO;
+import org.fiware.ngsi.model.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,27 +17,16 @@ import java.util.List;
  * Custom deserializer for the {@link org.fiware.ngsi.model.AdditionalPropertyVO}
  * It can differentiate between list and object type properties and handle them with the fitting serializer.
  */
-public class AdditionalPropertyDeserializer extends AsArrayTypeDeserializer {
-
-	/**
-	 * Default property-type deserializer can be used for the individual objects.
-	 */
-	private final AsPropertyTypeDeserializer additionalPropertyObjectDeser;
+public class AdditionalPropertyDeserializer extends AsPropertyTypeDeserializer {
 
 	public AdditionalPropertyDeserializer(JavaType bt, TypeIdResolver idRes, String typePropertyName, boolean typeIdVisible, JavaType defaultImpl) {
-		super(bt, idRes, typePropertyName, typeIdVisible, defaultImpl);
-		additionalPropertyObjectDeser = new AsPropertyTypeDeserializer(
-				TypeFactory.defaultInstance().constructType(new TypeReference<AdditionalPropertyObjectVO>() {}),
-				idRes,
-				AdditionalPropertyTypeResolver.NGSI_LD_TYPE_PROPERTY_NAME,
-				false,
-				defaultImpl);
-
+		super(bt, idRes, typePropertyName, typeIdVisible, defaultImpl, JsonTypeInfo.As.PROPERTY, false);
 	}
 
 	@Override
 	protected Object _deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
+		System.out.println("Beka");
 		// default behaviour
 		if (p.canReadTypeId()) {
 			Object typeId = p.getTypeId();
@@ -59,7 +40,7 @@ public class AdditionalPropertyDeserializer extends AsArrayTypeDeserializer {
 		// If the token is of type FIELD_NAME, no START_ARRAY was present, thus we can take the
 		// object and directly serialize it with the standard deserializer
 		if (t == JsonToken.FIELD_NAME) {
-			return additionalPropertyObjectDeser.deserializeTypedFromObject(p, ctxt);
+			return deserializeTypedFromObject(p, ctxt);
 		}
 		// case START_OBJECT
 		// If a start-object(e.g. '{') token is present, a START_ARRAY was present and we have at least one
@@ -77,7 +58,7 @@ public class AdditionalPropertyDeserializer extends AsArrayTypeDeserializer {
 	 * @param p the current parser
 	 * @param ctxt the desrialization context to use
 	 * @return object of the deserialized list, will be a PropertyList, GeoPropertyList or RelationshipList type
-	 * @throws IOException
+	 * @throws IOException thrown exception
 	 */
 	private Object deserializeArray(JsonParser p, DeserializationContext ctxt) throws IOException {
 		List<Object> deserializedObjects = new ArrayList<>();
@@ -85,7 +66,7 @@ public class AdditionalPropertyDeserializer extends AsArrayTypeDeserializer {
 		do {
 			next = p.nextToken();
 			if (next == JsonToken.FIELD_NAME) {
-				deserializedObjects.add(additionalPropertyObjectDeser.deserializeTypedFromObject(p, ctxt));
+				deserializedObjects.add(deserializeTypedFromObject(p, ctxt));
 			}
 		} while (next != JsonToken.END_ARRAY);
 
