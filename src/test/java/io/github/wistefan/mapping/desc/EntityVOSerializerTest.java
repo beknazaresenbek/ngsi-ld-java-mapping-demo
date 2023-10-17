@@ -1,9 +1,11 @@
 package io.github.wistefan.mapping.desc;
 
-import io.github.wistefan.mapping.CacheSerdeableObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wistefan.mapping.EntityVOSerializer;
+import io.github.wistefan.mapping.demo.MyMixin;
 import io.github.wistefan.mapping.desc.pojos.MySimplePojo;
 import io.micronaut.core.type.Argument;
+import org.fiware.ngsi.model.AdditionalPropertyVO;
 import org.fiware.ngsi.model.EntityVO;
 import org.fiware.ngsi.model.GeoPropertyVO;
 import org.junit.jupiter.api.Assertions;
@@ -17,11 +19,14 @@ import java.util.Optional;
 public class EntityVOSerializerTest {
 
     private EntityVOSerializer entityVOSerializer;
-    private static final CacheSerdeableObjectMapper objectMapper = new CacheSerdeableObjectMapper();
+//    private static final CacheSerdeableObjectMapper objectMapper = new CacheSerdeableObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @BeforeEach
     public void setup() {
-        entityVOSerializer = new EntityVOSerializer(objectMapper);
+        OBJECT_MAPPER.addMixIn(AdditionalPropertyVO.class, MyMixin.class);
+        OBJECT_MAPPER.findAndRegisterModules();
+        entityVOSerializer = new EntityVOSerializer(OBJECT_MAPPER);
     }
 
     @Test
@@ -39,6 +44,7 @@ public class EntityVOSerializerTest {
 
         Optional<EntityVO> d1 = entityVOSerializer.deserialize(s1.get(), EntityVO.class);
         Assertions.assertTrue(d1.isPresent());
+        Assertions.assertEquals(entityVO.getLocation().getType(), d1.get().getLocation().getType());
 
         Optional<byte[]> s2 = entityVOSerializer.serialize(List.of(entityVO));
         Assertions.assertTrue(s2.isPresent());
@@ -57,6 +63,7 @@ public class EntityVOSerializerTest {
 
         Optional<MySimplePojo> d1 = entityVOSerializer.deserialize(s1.get(), MySimplePojo.class);
         Assertions.assertTrue(d1.isPresent());
+        Assertions.assertEquals(pojo, d1.get());
     }
 
     @Test
@@ -70,5 +77,6 @@ public class EntityVOSerializerTest {
 
         Optional<?> d1 = entityVOSerializer.deserialize(s1.get(), Argument.of(List.class, MySimplePojo.class));
         Assertions.assertTrue(d1.isPresent());
+        Assertions.assertEquals(List.of(pojo), d1.get());
     }
 }

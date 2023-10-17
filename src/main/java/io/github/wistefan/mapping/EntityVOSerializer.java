@@ -21,7 +21,10 @@ public class EntityVOSerializer implements ObjectSerializer {
 
     private final ObjectMapper objectMapper;
 
-    public EntityVOSerializer(CacheSerdeableObjectMapper objectMapper) {
+//    public EntityVOSerializer(CacheSerdeableObjectMapper objectMapper) {
+//        this.objectMapper = objectMapper;
+//    }
+    public EntityVOSerializer(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
